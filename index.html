@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko" data-version="edu-v1.1">
+<html lang="ko" data-version="edu-v1.1.1">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -46,7 +46,7 @@
     .top-viewed{display:flex; gap:8px; align-items:center; padding:8px 12px; background:rgba(255,255,255,.55); border-radius:12px; overflow:hidden}
     .top-link{appearance:none; background:none; border:none; color:#0f172a; font-weight:800; cursor:pointer; padding:0; margin:0; display:inline-flex; align-items:center; gap:6px; flex:1 1 0; min-width:0}
     .top-link .txt{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:block; }
-    .top-link .views{ color:var(--muted); font-weight:700; }
+    .top-link .views{ color:#64748b; font-weight:700; }
     .top-link.placeholder{ cursor:default; opacity:.6 }
     .grid{display:grid;grid-template-columns:1fr;gap:12px}
     @media(min-width:640px){.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}}
@@ -166,8 +166,8 @@
     })();
   </script>
   <script>
-    // 🎓 교육 아이디어 북 (Pinterest + YouTube) — edu-v1.1
-    console.log('교육 아이디어 북 loaded edu-v1.1');
+    // 🎓 교육 아이디어 북 (Pinterest + YouTube) — edu-v1.1.1
+    console.log('교육 아이디어 북 loaded edu-v1.1.1');
     function supportsLocalStorage(){ try{ var t='__t__'; localStorage.setItem(t,'1'); localStorage.removeItem(t); return true; }catch(e){ return false; } }
     class EduIdeasApp{
       constructor(){
@@ -177,15 +177,48 @@
         if(changed) this.saveItems();
         this.init();
       }
+      // ---- public migration method (inside class to avoid ReferenceError) ----
+      migrateFromRecipes(){
+        try{
+          var raw = localStorage.getItem('youtubeRecipes');
+          if(!raw){ alert('이전 레시피 데이터(youtubeRecipes)를 찾지 못했습니다.'); return; }
+          var arr = JSON.parse(raw);
+          if(!Array.isArray(arr)){ alert('youtubeRecipes 형식이 올바르지 않습니다.'); return; }
+          var added = 0;
+          for(var i=0;i<arr.length;i++){
+            var it = arr[i] || {};
+            var url = it.url || it.link || '';
+            if(!url) continue;
+            if(this.items.some(function(r){return r.url===url;})) continue; // 중복 방지
+            var provider = this.detectProvider(url);
+            var title = it.title || it.name || '이전 레시피';
+            var rec = {
+              id: Date.now().toString() + '-' + i,
+              title: title,
+              url: url,
+              thumbnail: it.thumbnail || '',
+              provider: provider,
+              createdAt: (it.createdAt || new Date().toISOString()),
+              lastViewedAt: it.lastViewedAt || null,
+              views: it.views || 0,
+              favorite: !!it.favorite,
+              tags: this.generateTags(title)
+            };
+            this.items.push(rec); added++;
+          }
+          this.saveItems(); this.render(); this.updateTopViewed();
+          alert('마이그레이션 완료: '+added+'개 항목이 eduIdeas로 이동되었습니다.');
+        }catch(e){ console.error(e); alert('마이그레이션 중 오류가 발생했습니다. 콘솔을 확인하세요.'); }
+      }
       init(){
         this.setupEventListeners(); this.render(); this.updateTopViewed(); this.setupPWA();
         if(location.hash.indexOf('#play=')===0){ var id=location.hash.split('=')[1]; if(id){ var s=this; setTimeout(function(){ s.openPlayer(id); },0);} }
-        if(location.hash.indexOf('#shared=')===0){ var p=decodeURIComponent(location.hash.slice('#shared='.length)); var s2=this; setTimeout(function(){ s2.handleSharedPayload(p); },0); }
         var self=this;
         window.addEventListener('hashchange', function(){
           if(location.hash.indexOf('#play=')===0){ var id=location.hash.split('=')[1]; if(id) self.openPlayer(id); }
-          else if(location.hash.indexOf('#shared=')===0){ var p=decodeURIComponent(location.hash.slice('#shared='.length)); self.handleSharedPayload(p); }
-          else{ var pv=document.getElementById('player-view'); if(pv.classList.contains('show')) self.closePlayer(); }
+          else{
+            var pv=document.getElementById('player-view'); if(pv.classList.contains('show')) self.closePlayer();
+          }
         });
       }
       setupEventListeners(){
@@ -380,43 +413,8 @@
         if('serviceWorker' in navigator){ window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(err){ console.log('SW registration failed', err); }); }); }
       }
     }
+    // app instance
     var app=new EduIdeasApp();
-  </script>
-  <script>
-  // --- 데이터 마이그레이션: youtubeRecipes -> eduIdeas ---
-  // 실행 방법: 콘솔에서 app.migrateFromRecipes() 호출
-  EduIdeasApp.prototype.migrateFromRecipes = function(){
-    try{
-      var raw = localStorage.getItem('youtubeRecipes');
-      if(!raw){ alert('이전 레시피 데이터(youtubeRecipes)를 찾지 못했습니다.'); return; }
-      var arr = JSON.parse(raw);
-      if(!Array.isArray(arr)){ alert('youtubeRecipes 형식이 올바르지 않습니다.'); return; }
-      var added = 0;
-      for(var i=0;i<arr.length;i++){
-        var it = arr[i] || {};
-        var url = it.url || it.link || '';
-        if(!url) continue;
-        if(this.items.some(function(r){return r.url===url;})) continue; // 중복 방지
-        var provider = this.detectProvider(url);
-        var title = it.title || it.name || '이전 레시피';
-        var rec = {
-          id: Date.now().toString() + '-' + i,
-          title: title,
-          url: url,
-          thumbnail: it.thumbnail || '',
-          provider: provider,
-          createdAt: (it.createdAt || new Date().toISOString()),
-          lastViewedAt: it.lastViewedAt || null,
-          views: it.views || 0,
-          favorite: !!it.favorite,
-          tags: this.generateTags(title)
-        };
-        this.items.push(rec); added++;
-      }
-      this.saveItems(); this.render(); this.updateTopViewed();
-      alert('마이그레이션 완료: '+added+'개 항목이 eduIdeas로 이동되었습니다.');
-    }catch(e){ console.error(e); alert('마이그레이션 중 오류가 발생했습니다. 콘솔을 확인하세요.'); }
-  };
   </script>
 </body>
 </html>
