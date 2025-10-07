@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="ko" data-version="edu-v1.1">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>🎓 교육 아이디어 북</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0ea5e9" />
+  <meta name="description" content="핀터레스트/유튜브 아이디어를 간편 저장·키워드 검색" />
+  <link rel="icon" href="icon-192x192.png" />
+  <link rel="apple-touch-icon" href="icon-180x180.png" />
+  <style>
+    :root { --ink:#0f172a; --muted:#64748b; --pri:#0ea5e9; --soft:#f0f9ff; --fav:#0369a1; --touch:56px; }
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,ui-rounded,'Noto Sans KR',sans-serif;background:linear-gradient(135deg,#38bdf8 0%,#6366f1 100%);min-height:100vh;padding:12px;-webkit-tap-highlight-color:transparent}
+    .container{max-width:1000px;margin:0 auto;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);border-radius:20px;box-shadow:0 20px 40px rgba(0,0,0,.1);overflow:hidden}
+    .header{background:linear-gradient(135deg,#0ea5e9,#38bdf8);color:#fff;padding:26px 16px;text-align:center;position:relative}
+    .header h1{font-size:2em;margin-bottom:6px;text-shadow:0 2px 4px rgba(0,0,0,.25)}
+    .header p{opacity:.95;font-size:.95em}
+    .main-content{padding:20px}
+    .add-section{background:linear-gradient(135deg,#f8fafc,#e2e8f0);border-radius:15px;padding:12px;margin-bottom:12px;border:1px solid #e2e8f0}
+    .url-input-container{position:relative;margin-bottom:8px}
+    .url-input{width:100%;padding:14px 154px 14px 14px;border:2px solid #e5e7eb;border-radius:12px;font-size:16px;transition:all .3s ease;-webkit-user-select:auto}
+    .url-input:focus{outline:none;border-color:var(--pri);box-shadow:0 0 0 3px rgba(14,165,233,.15)}
+    .add-btn{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;padding:12px 14px;border-radius:12px;cursor:pointer;font-weight:800;transition:all .2s ease;font-size:16px;min-height:var(--touch)}
+    .add-btn:hover{transform:translateY(-50%) translateY(-1px)}
+    .add-btn:disabled{background:#9ca3af;cursor:not-allowed;transform:translateY(-50%)}
+    .loading{display:none;text-align:center;color:#6b7280;margin-top:6px}
+    .toolbar{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap}
+    .left-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .tool-btn{background:#0f172a;color:#fff;border:none;border-radius:999px;padding:8px 12px;cursor:pointer;font-weight:800}
+    .tool-btn.secondary{background:#e5e7eb;color:#0f172a}
+    .tool-btn.toggled{box-shadow:inset 0 0 0 2px #0f172a}
+    .sort-select{border:2px solid #e5e7eb;border-radius:999px;padding:8px 12px;background:#fff;font-weight:800}
+    .search-section{background:linear-gradient(135deg,#f8fafc,#e2e8f0);border-radius:15px;padding:12px;margin-bottom:12px;border:1px solid #e2e8f0}
+    .search-title{margin:0 0 8px 2px;color:#334155;font-weight:800;font-size:1rem}
+    .search-container{position:relative;max-width:650px;margin:0 auto}
+    .search-input{width:100%;padding:14px 120px 14px 14px;border:2px solid #e5e7eb;border-radius:12px;font-size:16px;transition:all .3s ease}
+    .search-input:focus{outline:none;border-color:var(--pri);box-shadow:0 0 0 3px rgba(14,165,233,.15)}
+    .clear-btn{position:absolute;right:86px;top:50%;transform:translateY(-50%);background:transparent;border:none;font-size:18px;cursor:pointer;color:#6b7280;height:var(--touch);width:44px}
+    .search-btn{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:#0f172a;color:#fff;border:none;padding:12px 14px;border-radius:12px;cursor:pointer;font-weight:800;min-height:var(--touch)}
+    .top-viewed-wrap{margin:4px 0 14px}
+    .top-viewed-title{font-weight:800;color:#334155;margin:0 0 6px 2px}
+    .top-viewed{display:flex; gap:8px; align-items:center; padding:8px 12px; background:rgba(255,255,255,.55); border-radius:12px; overflow:hidden}
+    .top-link{appearance:none; background:none; border:none; color:#0f172a; font-weight:800; cursor:pointer; padding:0; margin:0; display:inline-flex; align-items:center; gap:6px; flex:1 1 0; min-width:0}
+    .top-link .txt{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:block; }
+    .top-link .views{ color:var(--muted); font-weight:700; }
+    .top-link.placeholder{ cursor:default; opacity:.6 }
+    .grid{display:grid;grid-template-columns:1fr;gap:12px}
+    @media(min-width:640px){.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}}
+    @media(min-width:980px){.grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}}
+    .card{background:#fff;border-radius:14px;box-shadow:0 4px 12px rgba(0,0,0,.1);overflow:hidden;transition:all .2s ease;border:1px solid #e2e8f0;position:relative}
+    .card:hover{transform:translateY(-3px);box-shadow:0 10px 24px rgba(0,0,0,.15)}
+    .thumb{width:100%;height:200px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;font-size:48px;position:relative;overflow:hidden}
+    .thumb img{width:100%;height:100%;object-fit:cover}
+    .play-overlay{position:absolute;bottom:12px;right:12px;background:rgba(0,0,0,.75);color:#fff;padding:8px 12px;border-radius:999px;display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer;backdrop-filter:saturate(180%) blur(8px)}
+    .fav-btn{position:absolute;top:12px;right:12px;background:rgba(255,255,255,.9);border:none;border-radius:999px;padding:8px 10px;cursor:pointer;font-size:16px;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+    .fav-btn.active{background:#ffe8a3}
+    .content{padding:16px}
+    .title{font-size:1.05em;font-weight:800;color:#1f2937;margin-bottom:8px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    .meta{color:#64748b;font-size:13px;margin-bottom:12px}
+    .actions{display:flex;gap:8px;align-items:center}
+    .open-btn{flex:1;background:#0f172a;color:#fff;padding:12px 16px;border:none;border-radius:12px;cursor:pointer;font-weight:800;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:var(--touch)}
+    .share-btn{background:#f3f4f6;color:#0f172a;border:none;padding:12px 16px;border-radius:12px;cursor:pointer;font-weight:800;min-height:var(--touch)}
+    .delete-btn{background:#f3f4f6;color:#64748b;border:none;padding:12px;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;min-height:var(--touch);min-width:var(--touch)}
+    .delete-btn:hover{background:#ef4444;color:#fff}
+    .delete-btn.nohover:hover{background:#f3f4f6;color:#64748b}
+    .no-results{text-align:center;padding:36px 16px;color:#64748b;font-size:1.05em}
+    .player-view{position:fixed;inset:0;background:#000;color:#fff;z-index:50;display:none;flex-direction:column}
+    .player-view.show{display:flex}
+    .pv-body{flex:1;display:flex;align-items:center;justify-content:center;padding:0 0 env(safe-area-inset-bottom) 0}
+    .pv-iframe-wrap{width:100%;max-width:900px;aspect-ratio:9/16;background:#000}
+    .pv-iframe-wrap iframe{width:100%;height:100%;border:0}
+    .pv-footer{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom) + 28px);display:flex;gap:12px;justify-content:center;padding:0 16px;background:linear-gradient(to top,rgba(0,0,0,.6),rgba(0,0,0,0))}
+    .pv-btn{background:var(--fav);color:#fff;border:none;border-radius:999px;padding:14px 20px;font-weight:900;cursor:pointer;font-size:16px}
+    .pv-btn:active{transform:scale(.98)}
+    .install-mask{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);display:none;z-index:60}
+    .install-mask.show{display:block}
+    .install-card{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(92vw,520px);background:#fff;border-radius:16px;box-shadow:0 12px 32px rgba(0,0,0,.25);padding:16px}
+    .install-card h3{margin-bottom:8px;font-size:1.05rem;color:#0f172a}
+    .install-card p{color:#334155;line-height:1.45;margin:6px 0}
+    .install-actions{display:flex;justify-content:flex-end;margin-top:12px}
+    .btn{background:#0f172a;color:#fff;border:none;border-radius:10px;padding:10px 14px;font-weight:800;cursor:pointer}
+    .btn.secondary{background:#e5e7eb;color:#0f172a}
+    .err-banner{position:fixed;left:0;right:0;top:0;background:#fee2e2;color:#991b1b;padding:10px 14px;font-weight:800;z-index:1000;display:none}
+    .err-banner.show{display:block}
+  </style>
+</head>
+<body>
+  <div id="err" class="err-banner"></div>
+  <div class="container">
+    <div class="header">
+      <h1>🎓 교육 아이디어 북</h1>
+      <p>주소 추가 → 검색 → 열기/재생</p>
+    </div>
+    <div class="main-content">
+      <div class="toolbar">
+        <div class="left-tools">
+          <button id="fav-filter" class="tool-btn secondary" aria-pressed="false" type="button">⭐ 즐겨찾기만</button>
+          <select id="sort-select" class="sort-select" aria-label="정렬">
+            <option value="latest" selected>최신순</option>
+            <option value="most_viewed">자주본순</option>
+            <option value="favorites_first">즐겨찾기 우선</option>
+          </select>
+          <button id="install-inline" class="tool-btn secondary" type="button">앱 설치</button>
+        </div>
+      </div>
+      <div id="add-section" class="add-section">
+        <h3 style="margin-bottom:8px;color:#334155">🔗 아이디어 링크 추가</h3>
+        <div class="url-input-container">
+          <input type="url" id="idea-url" class="url-input" placeholder="https://www.pinterest.com/... 또는 https://youtu.be/...">
+          <button id="add-btn" class="add-btn" type="button">추가</button>
+        </div>
+        <div id="loading" class="loading">⏳ 제목을 가져오는 중...</div>
+      </div>
+      <div class="search-section add-section">
+        <h3 class="search-title">🔎 아이디어 검색</h3>
+        <div class="search-container">
+          <input type="text" id="search-input" class="search-input" placeholder="키워드 또는 #태그 (예: 그림책, #저학년, #프로젝트, PBS)">
+          <button id="clear-btn" class="clear-btn" title="지우기" type="button">✕</button>
+          <button id="search-btn" class="search-btn" type="button">검색</button>
+        </div>
+      </div>
+      <div class="top-viewed-wrap">
+        <div class="top-viewed-title">최다 조회 아이디어</div>
+        <div id="top-viewed" class="top-viewed" title=""></div>
+      </div>
+      <div id="ideas-container">
+        <div id="grid" class="grid"></div>
+        <div id="no-results" class="no-results" style="display:none">저장된 아이디어가 없습니다. 상단에서 주소를 추가해보세요.</div>
+      </div>
+    </div>
+  </div>
+  <section id="player-view" class="player-view" aria-hidden="true">
+    <div class="pv-body">
+      <div class="pv-iframe-wrap">
+        <iframe id="pv-iframe" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+      </div>
+    </div>
+    <div class="pv-footer">
+      <button id="pv-back" class="pv-btn" type="button">뒤로</button>
+      <button id="pv-fav" class="pv-btn" type="button">즐겨찾기</button>
+      <button id="pv-share" class="pv-btn" type="button">공유</button>
+    </div>
+  </section>
+  <div id="install-help" class="install-mask" role="dialog" aria-modal="true" aria-labelledby="install-title">
+    <div class="install-card">
+      <h3 id="install-title">앱 설치 안내</h3>
+      <div id="install-steps"></div>
+      <div class="install-actions">
+        <button id="help-close" class="btn" type="button">확인</button>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function(){
+      window.addEventListener('error', function(e){
+        var el = document.getElementById('err');
+        if(!el) return;
+        el.textContent = '스크립트 오류: ' + (e.message || '알 수 없음');
+        el.classList.add('show');
+        setTimeout(function(){ el.classList.remove('show'); }, 6000);
+      });
+    })();
+  </script>
+  <script>
+    // 🎓 교육 아이디어 북 (Pinterest + YouTube) — edu-v1.1
+    console.log('교육 아이디어 북 loaded edu-v1.1');
+    function supportsLocalStorage(){ try{ var t='__t__'; localStorage.setItem(t,'1'); localStorage.removeItem(t); return true; }catch(e){ return false; } }
+    class EduIdeasApp{
+      constructor(){
+        this.items=this.loadItems(); this.current=null; this.onlyFav=false; this.sortMode='latest'; this.deferredPrompt=null;
+        var changed=false;
+        for(var i=0;i<this.items.length;i++){ var r=this.items[i]; if(!r.tags) r.tags=[]; if(r.tags.length===0){ var g=this.generateTags(r.title||''); if(g.length){ r.tags=g; changed=true; } } }
+        if(changed) this.saveItems();
+        this.init();
+      }
+      init(){
+        this.setupEventListeners(); this.render(); this.updateTopViewed(); this.setupPWA();
+        if(location.hash.indexOf('#play=')===0){ var id=location.hash.split('=')[1]; if(id){ var s=this; setTimeout(function(){ s.openPlayer(id); },0);} }
+        if(location.hash.indexOf('#shared=')===0){ var p=decodeURIComponent(location.hash.slice('#shared='.length)); var s2=this; setTimeout(function(){ s2.handleSharedPayload(p); },0); }
+        var self=this;
+        window.addEventListener('hashchange', function(){
+          if(location.hash.indexOf('#play=')===0){ var id=location.hash.split('=')[1]; if(id) self.openPlayer(id); }
+          else if(location.hash.indexOf('#shared=')===0){ var p=decodeURIComponent(location.hash.slice('#shared='.length)); self.handleSharedPayload(p); }
+          else{ var pv=document.getElementById('player-view'); if(pv.classList.contains('show')) self.closePlayer(); }
+        });
+      }
+      setupEventListeners(){
+        document.getElementById('add-btn').addEventListener('click',()=>{this.addItem()});
+        document.getElementById('idea-url').addEventListener('keypress',(e)=>{if(e.key==='Enter'){this.addItem()}});
+        var searchInput=document.getElementById('search-input'); var doSearch=()=>{this.search(searchInput.value)};
+        searchInput.addEventListener('input',doSearch);
+        document.getElementById('search-btn').addEventListener('click',doSearch);
+        document.getElementById('clear-btn').addEventListener('click',()=>{searchInput.value='';this.render();searchInput.focus()});
+        var favBtn=document.getElementById('fav-filter');
+        favBtn.addEventListener('click',()=>{ this.onlyFav=!this.onlyFav; favBtn.classList.toggle('toggled',this.onlyFav); favBtn.setAttribute('aria-pressed',String(this.onlyFav)); this.render(searchInput.value); });
+        var sortSel=document.getElementById('sort-select');
+        sortSel.addEventListener('change',(e)=>{ this.sortMode=e.target.value; this.render(searchInput.value); });
+        document.getElementById('pv-back').addEventListener('click',()=>this.closePlayer());
+        document.getElementById('pv-fav').addEventListener('click',()=>this.toggleFavCurrent());
+        document.getElementById('pv-share').addEventListener('click',()=>this.shareCurrent());
+      }
+      detectProvider(url){
+        if(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)/i.test(url)) return 'youtube';
+        if(/(?:pinterest\.\w+\/pin\/|pinterest\.\w+\/.*)/i.test(url)) return 'pinterest';
+        return 'link';
+      }
+      isValidUrl(url){ try{ new URL(url); return true; }catch(_){ return false; } }
+      extractYouTubeId(url){ var p=[/(?:youtube\.com\/shorts\/)([a-zA-Z0-9_-]+)/,/(?:youtube\.com\/watch\?v=)([a-zA-Z0-9_-]+)/,/(?:youtu\.be\/)([a-zA-Z0-9_-]+)/]; for(var i=0;i<p.length;i++){ var m=url.match(p[i]); if(m) return m[1]; } return null; }
+      extractPinterestId(url){ var m=url.match(/pinterest\.[^\/]+\/pin\/(\d+)/); return m?m[1]:null; }
+      async fetchTitle(url, provider){
+        if(provider==='youtube'){
+          try{ var id=this.extractYouTubeId(url); if(!id) throw new Error('invalid'); var r=await fetch('https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v='+id+'&format=json'); if(!r.ok) throw new Error('oEmbed failed'); var d=await r.json(); return d.title; }catch(_){ var id2=this.extractYouTubeId(url); return 'YouTube 아이디어 ('+(id2||'알 수 없음')+')'; }
+        }
+        if(provider==='pinterest'){
+          try{ var r2=await fetch('https://www.pinterest.com/oembed.json?url='+encodeURIComponent(url)); if(r2.ok){ var d2=await r2.json(); if(d2 && d2.title) return d2.title; }
+          }catch(_){ }
+          try{
+            var u=new URL(url); var slug=u.pathname.split('/').filter(Boolean).pop()||''; slug=decodeURIComponent(slug.replace(/[-_]/g,' '));
+            if(slug && !/^(pin|ideas?)$/i.test(slug)) return 'Pinterest: '+slug;
+          }catch(_){ }
+          return 'Pinterest 아이디어';
+        }
+        return '웹 아이디어';
+      }
+      async makeThumb(url, provider){
+        if(provider==='youtube'){
+          var id=this.extractYouTubeId(url)||''; return 'https://img.youtube.com/vi/'+id+'/hqdefault.jpg';
+        }
+        if(provider==='pinterest'){
+          try{ var r=await fetch('https://www.pinterest.com/oembed.json?url='+encodeURIComponent(url)); if(r.ok){ var d=await r.json(); if(d && d.thumbnail_url) return d.thumbnail_url; } }catch(_){ }
+          return 'https://www.google.com/s2/favicons?domain=pinterest.com&sz=128';
+        }
+        try{ var host=new URL(url).host; return 'https://www.google.com/s2/favicons?domain='+host+'&sz=128'; }catch(_){ return 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22256%22 height=%22144%22><rect width=%22256%22 height=%22144%22 fill=%22%23e2e8f0%22/><text x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-family=%22sans-serif%22 font-size=%2220%22 fill=%22%2364748b%22>IDEA</text></svg>'; }
+      }
+      generateTags(title){
+        var t=(title||'').toLowerCase();
+        var dict=[
+          [/그림책|picture ?book|read-?aloud|storytime|낭독|읽어주기/, '그림책'],
+          [/동시|poem|poetry|시쓰기|운율|은유/, '동시/시쓰기'],
+          [/pbs|긍정|행동지|행동지원|행동중재|sel|회복적|학급긍정|restorative/, 'PBS/SEL'],
+          [/아침활동|종례|룰|규칙|클래스|교실운영|학급경영|칭찬스티커|학급경제/, '학급운영'],
+          [/pbl|프로젝트|탐구|탐험|project|inquiry/, '프로젝트학습'],
+          [/협동|모둠|jigsaw|협력|코옵|협동학습/, '협동학습'],
+          [/평가|루브릭|포트폴리오|rubric|형성평가|수행평가|서술형/, '평가/루브릭'],
+          [/수학|math|연산|도형|측정|자료해석|수감각/, '수학'],
+          [/과학|science|실험|생태|기후|환경|생물|지구과학|생태전환|지속가능발전|sdgs/, '과학/생태'],
+          [/사회|역사|지리|민주|인권|시민|세계시민|통일|지리게임/, '사회/시민'],
+          [/영어|english|phonics|리딩|스피킹|teps|toeic|듣기|말하기|어휘/, '영어'],
+          [/국어|문해|독서|읽기|쓰기|어휘|받아쓰기|토론|디베이트|독서토론/, '국어/문해'],
+          [/미술|art|그리기|공예|만들기|색칠|디자인|포스터/, '미술'],
+          [/음악|music|리코더|합창|박자|리듬|가창/, '음악'],
+          [/체육|pe|놀이|게임|활동|체력|줄넘기|신체활동/, '체육/놀이'],
+          [/코딩|스크래치|엔트리|micro:bit|파이썬|python|javascript|메이커|아두이노|로봇|3d프린터/, '코딩/메이커'],
+          [/행사|축제|운동회|체험|현장학습|여행|월별행사|학교축제|졸업|입학|소풍/, '행사/체험'],
+          [/저학년|1-2학년|1학년|2학년|초저|저연령/, '저학년'],
+          [/중학년|3-4학년|3학년|4학년/, '중학년'],
+          [/고학년|5-6학년|5학년|6학년|초고|고연령/, '고학년'],
+          [/학부모|가정통신문|공유|상담|소통|학부모교육/, '학부모'],
+          [/템플릿|양식|활동지|자료|프린트|구글폼|슬라이드|ppt|canva|티칭팁|클립아트/, '자료/템플릿'],
+          [/특수|통합교육|개별화교육|iep|무장애|유니버설디자인|udl/, '특수/통합교육'],
+          [/안전|응급|교통|생활안전|성폭력예방|재난|소방|지진/, '안전교육'],
+          [/진로|직업|미래|ai|인공지능|ar|vr|xr|메타버스|디지털리터러시/, '미래·디지털'],
+          [/기초학력|학습격차|보정|보충|튜터링|학습코칭/, '기초학력'],
+          [/환경꾸미기|교실환경|데코|게시판|표어|포토존/, '교실환경'],
+          [/학급회의|자치|의사결정|규칙만들기/, '학급자치']
+        ];
+        var tags=[], i; for(i=0;i<dict.length;i++){ if(dict[i][0].test(t)) tags.push(dict[i][1]); }
+        var out=[], j; for(j=0;j<tags.length;j++){ if(out.indexOf(tags[j])===-1) out.push(tags[j]); }
+        return out;
+      }
+      async addItem(){
+        var urlInput=document.getElementById('idea-url'); var addBtn=document.getElementById('add-btn'); var loading=document.getElementById('loading');
+        var url=urlInput.value.trim(); if(!url){alert('링크를 입력해주세요.');return;}
+        if(!this.isValidUrl(url)){alert('올바른 주소가 아닙니다.');return;}
+        if(this.items.some((r)=>r.url===url)){alert('이미 저장된 아이디어입니다.');return;}
+        var provider=this.detectProvider(url);
+        addBtn.disabled=true; loading.style.display='block';
+        try{
+          var title=await this.fetchTitle(url, provider);
+          var thumb=await this.makeThumb(url, provider);
+          var item={ id:Date.now().toString(), title:title||'제목을 가져올 수 없습니다', url:url, thumbnail:thumb, provider:provider, createdAt:new Date().toISOString(), views:0, favorite:false, tags:this.generateTags(title||'') };
+          this.items.unshift(item); this.saveItems(); this.render(); this.updateTopViewed(); urlInput.value='';
+          if(provider!=='youtube') this.promptEditTitle(item.id);
+        }catch(err){ console.error(err); alert('제목/썸네일을 가져오는데 실패했습니다. 수동으로 수정해주세요.'); }
+        finally{ addBtn.disabled=false; loading.style.display='none'; }
+      }
+      promptEditTitle(id){
+        var it=this.items.find(function(x){return x.id===id;}); if(!it) return;
+        var suggestion=it.title; try{ var u=new URL(it.url); var seg=u.pathname.split('/').filter(Boolean).slice(-2).join(' ').replace(/[-_]/g,' '); if(seg) suggestion=(''+seg).trim(); }catch(_){ }
+        var t=prompt('아이디어 제목을 확인/수정하세요', suggestion || it.title);
+        if(t){ it.title=t.trim(); it.tags=this.generateTags(it.title); this.saveItems(); this.render(document.getElementById('search-input').value); }
+      }
+      deleteItem(id,evt){ var btn=evt&&evt.currentTarget; var ok=confirm('정말 이 아이디어를 삭제하시겠습니까?'); if(ok){ this.items=this.items.filter(function(r){return r.id!==id;}); this.saveItems(); this.render(); this.updateTopViewed(); } else if(btn){ btn.classList.add('nohover'); btn.blur(); var off=function(){ btn.classList.remove('nohover'); btn.removeEventListener('mouseleave',off); }; btn.addEventListener('mouseleave',off,{once:true}); } }
+      toggleFav(id){ var r=this.items.find(function(x){return x.id===id;}); if(!r) return; r.favorite=!r.favorite; this.saveItems(); this.render(document.getElementById('search-input').value); this.updateTopViewed(); if(this.current && this.current.id===id){ this.syncPlayerFavBtn(); } }
+      toggleFavCurrent(){ if(!this.current) return; this.toggleFav(this.current.id); }
+      normalize(s){ return (s||'').toLowerCase().trim(); }
+      matchByQuery(r,q){ if(!q) return true; var tokens=this.normalize(q).split(/[\s,]+/).filter(Boolean); if(tokens.length===0) return true; var title=this.normalize(r.title); var tags=(r.tags||[]).map(function(x){return (x||'').toLowerCase().trim();}); return tokens.every(function(term){ var t=term.charAt(0)==='#'?term.slice(1):term; return title.indexOf(t)>-1 || tags.some(function(tag){return tag.indexOf(t)>-1;}); }); }
+      search(q){ this.render(q); }
+      sortList(list){ var m=this.sortMode; if(m==='most_viewed'){ return list.sort(function(a,b){ return (b.views||0)-(a.views||0) || (new Date(b.lastViewedAt||0))-(new Date(a.lastViewedAt||0)) || (new Date(b.createdAt||0))-(new Date(a.createdAt||0)); }); } if(m==='favorites_first'){ return list.sort(function(a,b){ return (a.favorite===b.favorite?0:(b.favorite?1:-1)) || (new Date(b.lastViewedAt||0))-(new Date(a.lastViewedAt||0)) || (new Date(b.createdAt||0))-(new Date(a.createdAt||0)); }); } return list.sort(function(a,b){ return (new Date(b.createdAt||0))-(new Date(a.createdAt||0)); }); }
+      render(searchQuery){ if(searchQuery===undefined) searchQuery=''; var list=this.items.slice(); if(this.onlyFav) list=list.filter(function(r){return r.favorite;}); if(searchQuery) list=list.filter((r)=>this.matchByQuery(r,searchQuery)); list=this.sortList(list);
+        var container=document.getElementById('grid'); var noResults=document.getElementById('no-results');
+        if(list.length===0){ container.style.display='none'; noResults.style.display='block'; noResults.innerHTML=searchQuery?('"'+searchQuery+'"에 대한 결과가 없습니다.'):'저장된 아이디어가 없습니다. 상단에서 주소를 추가해보세요.'; }
+        else{ container.style.display='grid'; noResults.style.display='none'; var html=''; for(var i=0;i<list.length;i++){ html+=this.createCard(list[i]); } container.innerHTML=html; } }
+      createCard(r){ var date=new Date(r.createdAt).toLocaleDateString('ko-KR'); var favClass=r.favorite?'fav-btn active':'fav-btn'; var favLabel=r.favorite?'⭐':'☆';
+        var srcEsc=(r.thumbnail||'').replace(/"/g,'&quot;');
+        return '<div class="card">\
+          <div class="thumb" onclick="app.openPlayer(\''+r.id+'\')">\
+            <img src="'+srcEsc+'" alt="'+(r.title||'아이디어')+'" onerror="this.onerror=null; this.src=\'data:image/svg+xml,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'256\\' height=\\'144\\'><rect width=\\'256\\' height=\\'144\\' fill=\\'%23e2e8f0\\'/><text x=\\'50%\\' y=\\'50%\\' dominant-baseline=\\'middle\\' text-anchor=\\'middle\\' font-family=\\'sans-serif\\' font-size=\\'20\\' fill=\\'%2364748b\\'>IDEA</text></svg>\';">\
+            <button class="'+favClass+'" onclick="event.stopPropagation(); app.toggleFav(\''+r.id+'\')" aria-pressed="'+r.favorite+'" type="button">'+favLabel+'</button>\
+            <div class="play-overlay">'+(r.provider==='youtube'?'▶ 재생':'⧉ 열기')+'</div>\
+          </div>\
+          <div class="content">\
+            <h3 class="title" title="'+(r.title||'').replace(/"/g,'&quot;')+'">'+r.title+'</h3>\
+            <div class="meta">저장일: '+date+(r.views?(' · 열람 '+r.views):'')+' · '+(r.provider==='youtube'?'YouTube':'Pinterest/웹')+'</div>\
+            <div class="actions">\
+              <button class="open-btn" onclick="app.openExternal(\''+r.id+'\')" type="button">원본 열기</button>\
+              <button class="share-btn" onclick="app.shareItem(\''+r.id+'\')" type="button">공유</button>\
+              <button class="delete-btn" onclick="app.deleteItem(\''+r.id+'\', event)" title="삭제" type="button">🗑️</button>\
+            </div>\
+          </div>\
+        </div>';
+      }
+      updateTopViewed(){
+        var el=document.getElementById('top-viewed'); if(!el) return;
+        var list=this.items.slice().filter(function(r){ return (r.views||0)>0; });
+        list.sort(function(a,b){
+          var av=(a.views||0), bv=(b.views||0);
+          if(bv-av!==0) return bv-av;
+          var al=a.lastViewedAt?new Date(a.lastViewedAt).getTime():0;
+          var bl=b.lastViewedAt?new Date(b.lastViewedAt).getTime():0;
+          if(bl-al!==0) return bl-al;
+          var ac=a.createdAt?new Date(a.createdAt).getTime():0;
+          var bc=b.createdAt?new Date(b.createdAt).getTime():0;
+          return bc-ac;
+        });
+        var slots=[list[0]||null, list[1]||null, list[2]||null];
+        function slotHtml(idx, rec){
+          if(rec){
+            var title=(rec.title||'').replace(/[&<>"']/g, function(m){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#039;'}[m]);});
+            var count=rec.views||0;
+            return '<button class="top-link" onclick="app.openPlayer(\''+rec.id+'\')" title="'+title+'"><span class="rank">'+(idx)+')</span><span class="txt">'+title+'</span><span class="views">('+count+')</span></button>';
+          }else{
+            return '<span class="top-link placeholder"><span class="rank">'+(idx)+')</span><span class="txt"></span></span>';
+          }
+        }
+        el.innerHTML = slotHtml(1, slots[0]) + slotHtml(2, slots[1]) + slotHtml(3, slots[2]);
+        var tip=''; for(var j=0;j<3;j++){ if(slots[j]){ tip+=(j+1)+') '+slots[j].title+' ('+(slots[j].views||0)+')'+(j<2?' | ':''); } }
+        el.title=tip || '열람 기록이 없습니다';
+      }
+      openExternal(id){ var rec=this.items.find(function(r){return r.id===id;}); if(!rec) return; rec.views=(rec.views||0)+1; rec.lastViewedAt=new Date().toISOString(); this.saveItems(); this.updateTopViewed(); window.open(rec.url,'_blank','noopener'); }
+      openPlayer(id){ var rec=this.items.find(function(r){return r.id===id;}); if(!rec) return; this.current=rec; rec.views=(rec.views||0)+1; rec.lastViewedAt=new Date().toISOString(); this.saveItems(); this.updateTopViewed();
+        var pv=document.getElementById('player-view'); var iframe=document.getElementById('pv-iframe');
+        if(rec.provider==='youtube'){
+          var vid=this.extractYouTubeId(rec.url); var embed='https://www.youtube.com/embed/'+vid+'?autoplay=1&modestbranding=1&rel=0&playsinline=1';
+          iframe.src=embed; pv.classList.add('show'); pv.setAttribute('aria-hidden','false'); history.pushState(null,'','#play='+id); document.documentElement.style.overflow='hidden'; document.body.style.overflow='hidden'; this.syncPlayerFavBtn();
+        } else if(rec.provider==='pinterest'){
+          var pinId=this.extractPinterestId(rec.url); if(pinId){ iframe.src='https://assets.pinterest.com/ext/embed.html?id='+pinId; pv.classList.add('show'); pv.setAttribute('aria-hidden','false'); history.pushState(null,'','#play='+id); document.documentElement.style.overflow='hidden'; document.body.style.overflow='hidden'; this.syncPlayerFavBtn(); }
+          else { window.open(rec.url,'_blank','noopener'); }
+        } else {
+          window.open(rec.url,'_blank','noopener');
+        }
+      }
+      closePlayer(){ var pv=document.getElementById('player-view'); var iframe=document.getElementById('pv-iframe'); pv.classList.remove('show'); pv.setAttribute('aria-hidden','true'); iframe.src=''; if(location.hash.indexOf('#play=')===0){ history.pushState('', document.title, window.location.pathname + window.location.search); } document.documentElement.style.overflow=''; document.body.style.overflow=''; }
+      syncPlayerFavBtn(){ var btn=document.getElementById('pv-fav'); if(!btn || !this.current) return; btn.textContent=((this.current && this.current.favorite)?'⭐ ':'☆ ')+'즐겨찾기'; }
+      async shareItem(id){ var rec=this.items.find(function(r){return r.id===id;}); if(!rec) return; var text=rec.title+"\n"+rec.url; if(navigator.share){ try{ await navigator.share({title:rec.title,text:rec.title,url:rec.url}); }catch(_){ } } else { try{ await navigator.clipboard.writeText(text); alert('링크가 클립보드에 복사되었습니다.'); }catch(_){ } } }
+      async shareCurrent(){ if(!this.current) return; var text=this.current.title+"\n"+this.current.url; if(navigator.share){ try{ await navigator.share({title:this.current.title,text:this.current.title,url:this.current.url}); }catch(_){ } } else { try{ await navigator.clipboard.writeText(text); alert('링크가 클립보드에 복사되었습니다.'); }catch(_){ } } }
+      loadItems(){ if(!supportsLocalStorage()) return []; try{ var s=localStorage.getItem('eduIdeas'); return s?JSON.parse(s):[]; }catch(_){ return []; } }
+      saveItems(){ if(!supportsLocalStorage()) return; try{ localStorage.setItem('eduIdeas', JSON.stringify(this.items)); }catch(e){ console.error('저장 중 오류:',e); } }
+      platform(){ var ua=navigator.userAgent||navigator.vendor||window.opera||''; var isiOS=/iPad|iPhone|iPod/.test(ua)&&!window.MSStream; var isSafari=/^((?!(chrome|android)).)*safari/i.test(ua); var isAndroid=/Android/.test(ua); var isChrome=/Chrome|CriOS/.test(ua); return { isiOS:isiOS, isSafari:isSafari, isAndroid:isAndroid, isChrome:isChrome }; }
+      showInstallHelp(){ var modal=document.getElementById('install-help'); var steps=document.getElementById('install-steps'); var p=this.platform(); var html=''; if(p.isiOS && p.isSafari){ html='<p>iPhone/iPad Safari에서는 아래 순서로 설치해요:</p><p>1) 화면 하단의 <b>공유</b> 버튼(□↑) 탭</p><p>2) 아래로 스크롤하여 <b>홈 화면에 추가</b> 선택</p>'; } else if(p.isAndroid && p.isChrome){ html='<p>Android Chrome에서는 주소창 오른쪽 메뉴(⋮)에서 <b>앱 설치</b>를 선택하거나, 잠시 사용 후 자동으로 표시되는 설치 배너를 이용할 수 있어요.</p>'; } else { html='<p>데스크톱 브라우저에서는 주소창 우측의 <b>설치 아이콘</b> 또는 브라우저 메뉴에서 <b>앱 설치</b>를 선택하세요.</p>'; } steps.innerHTML=html; modal.classList.add('show'); var close=document.getElementById('help-close'); if(close){ close.onclick=function(){ modal.classList.remove('show'); }; } }
+      setupPWA(){ var btn=document.getElementById('install-inline'); var hide=function(){ btn.style.display='none'; }; var show=function(){ btn.style.display='inline-flex'; };
+        var isStandalone=(window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone===true; if(isStandalone) hide(); else show();
+        var self=this; window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); self.deferredPrompt=e; show(); });
+        if(btn){ btn.addEventListener('click', async ()=>{ if(self.deferredPrompt){ self.deferredPrompt.prompt(); try{ await self.deferredPrompt.userChoice; }catch(_){ } self.deferredPrompt=null; } else { self.showInstallHelp(); } }); }
+        window.addEventListener('appinstalled', hide);
+        if('serviceWorker' in navigator){ window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(err){ console.log('SW registration failed', err); }); }); }
+      }
+    }
+    var app=new EduIdeasApp();
+  </script>
+  <script>
+  // --- 데이터 마이그레이션: youtubeRecipes -> eduIdeas ---
+  // 실행 방법: 콘솔에서 app.migrateFromRecipes() 호출
+  EduIdeasApp.prototype.migrateFromRecipes = function(){
+    try{
+      var raw = localStorage.getItem('youtubeRecipes');
+      if(!raw){ alert('이전 레시피 데이터(youtubeRecipes)를 찾지 못했습니다.'); return; }
+      var arr = JSON.parse(raw);
+      if(!Array.isArray(arr)){ alert('youtubeRecipes 형식이 올바르지 않습니다.'); return; }
+      var added = 0;
+      for(var i=0;i<arr.length;i++){
+        var it = arr[i] || {};
+        var url = it.url || it.link || '';
+        if(!url) continue;
+        if(this.items.some(function(r){return r.url===url;})) continue; // 중복 방지
+        var provider = this.detectProvider(url);
+        var title = it.title || it.name || '이전 레시피';
+        var rec = {
+          id: Date.now().toString() + '-' + i,
+          title: title,
+          url: url,
+          thumbnail: it.thumbnail || '',
+          provider: provider,
+          createdAt: (it.createdAt || new Date().toISOString()),
+          lastViewedAt: it.lastViewedAt || null,
+          views: it.views || 0,
+          favorite: !!it.favorite,
+          tags: this.generateTags(title)
+        };
+        this.items.push(rec); added++;
+      }
+      this.saveItems(); this.render(); this.updateTopViewed();
+      alert('마이그레이션 완료: '+added+'개 항목이 eduIdeas로 이동되었습니다.');
+    }catch(e){ console.error(e); alert('마이그레이션 중 오류가 발생했습니다. 콘솔을 확인하세요.'); }
+  };
+  </script>
+</body>
+</html>
